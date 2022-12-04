@@ -11,6 +11,9 @@ job('seed_job') {
             scm('*/5 * * * *')
         }
   steps {
+    environmentVariables {
+        envs(PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true)
+    }
     shell('echo "Alkan, Seyit Han" ')
     shell('sh "Jenkins/build.sh" ')
   }

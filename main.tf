@@ -15,7 +15,7 @@ locals {
 
 locals {
   bash       = "chmod 400 ${local_file.private_key_pem.filename}"
-  powershell = "icacls ${local_file.private_key_pem.filename} /inheritancelevel:r /grant:r Everyone:R"
+  powershell = "icacls ${local_file.private_key_pem.filename} /inheritancelevel:r /grant:r Administrators:R"
 }
 
 
@@ -293,6 +293,7 @@ resource "aws_elastic_beanstalk_environment" "react" {
     namespace = "aws:ec2:vpc"
     name      = "Subnets"
     value     = join (",", [aws_subnet.public_subnets["public_subnet_1"].id , aws_subnet.public_subnets["public_subnet_2"].id ])
+    resource  = ""
   }
   
   setting {
@@ -367,31 +368,7 @@ resource "aws_ecr_repository" "react-docker" {
     scan_on_push = true
   }
 }
-resource "aws_ecr_repository_policy" "react-docker-policy" {
-repository = aws_ecr_repository.react-docker.name
-policy     = <<EOF
-{
-  "Version": "2008-10-17",
-  "Statement": [
-    {
-      "Sid": "adds full ecr access to the react repository",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": [
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:BatchGetImage",
-        "ecr:CompleteLayerUpload",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:GetLifecyclePolicy",
-        "ecr:InitiateLayerUpload",
-        "ecr:PutImage",
-        "ecr:UploadLayerPart"
-      ]
-    }
-  ]
-}
-EOF
-}
+
 
 resource "aws_ecr_repository" "jenkins" {
   name                 = "jenkins"
@@ -410,6 +387,47 @@ resource "aws_s3_bucket" "seyithan_react" {
   tags = {
     Name        = "my_react"
   }
+}
+
+#IAM Policy for Elastic Beanstal Deployment
+data "aws_iam_role" "elastic_beanstalk_role" {
+  name = "aws-elasticbeanstalk-ec2-role"
+}
+
+resource "aws_iam_policy" "ebs_ecr_policy" {
+  name        = "aws-elasticbeanstalk-ec2-ecr-policy"
+  description = "Enable elastic-beanstalk to be able to access ECR repository with images"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetRepositoryPolicy",
+                "ecr:DescribeRepositories",
+                "ecr:ListImages",
+                "ecr:DescribeImages",
+                "ecr:BatchGetImage",
+                "ecr:GetLifecyclePolicy",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:ListTagsForResource",
+                "ecr:DescribeImageScanFindings"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy_attachment" "ebs_ecr-policy-attach" {
+  name       = "ebs-ecr-policy-attachment"
+  roles      = [data.aws_iam_role.elastic_beanstalk_role.name]
+  policy_arn = aws_iam_policy.ebs_ecr_policy.arn
 }
 
 
