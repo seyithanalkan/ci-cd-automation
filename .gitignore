@@ -3,3 +3,4 @@
 terraform.tfstate
 terraform.tfstate.backup
 MyAWSKey.pem
+ec2-secret.sh
