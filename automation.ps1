@@ -10,3 +10,5 @@ chocolatey install terraform --force -y
 terraform init
 terraform plan
 terraform apply -auto-approve
+(Get-Content -path .\ec2-secret.sh -Raw) -replace ".*AWS_ACCESS_KEY_ID=.*", "line2" | Set-Content .\ec2-secret.sh
+(Get-Content -path .\ec2-secret.sh -Raw) -replace ".*AWS_SECRET_ACCESS_KEY=.*", "line3" | Set-Content .\ec2-secret.sh

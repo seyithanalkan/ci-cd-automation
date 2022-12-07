@@ -19,6 +19,7 @@ terraform -v
 terraform init
 terraform plan
 terraform apply -auto-approve 
-
+sed -i 's|.*AWS_ACCESS_KEY_ID.*|line2|g' ec2-secret.sh
+sed 's|.*AWS_SECRET_ACCESS_KEY.*|line3|g' ec2-secret.sh
 
 
